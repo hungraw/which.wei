@@ -1,0 +1,76 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}  # Manual trigger
+
+# Only one deploy at a time
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write  # For git tagging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Deploy to IPFS + update contenthash
+        run: npm run deploy
+        env:
+          FILEBASE_KEY: ${{ secrets.FILEBASE_KEY }}
+          FILEBASE_SECRET: ${{ secrets.FILEBASE_SECRET }}
+          FILEBASE_BUCKET: ${{ secrets.FILEBASE_BUCKET }}
+          WEI_DEPLOYER_KEY: ${{ secrets.WEI_DEPLOYER_KEY }}
+
+      - name: Tag deployment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          CID=$(cat .last-deploy-cid 2>/dev/null || echo "")
+          if [ -z "$CID" ]; then
+            echo "No CID found, skipping tag"
+            exit 0
+          fi
+          TAG="deploy/$(date -u +%Y%m%d-%H%M)-${CID:0:12}"
+          git tag -a "$TAG" -m "Deploy CID: ${CID}"
+          git push origin "$TAG"
+          echo "Tagged: $TAG"

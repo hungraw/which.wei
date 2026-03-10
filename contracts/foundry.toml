@@ -1,0 +1,24 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.27"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 1_000_000
+via_ir = false
+gas_reports = ["rAgg"]
+fs_permissions = [{ access = "read", path = "test/fixtures" }]
+
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "zolidity/=lib/zolidity/src/",
+    "solady/=lib/solady/src/",
+]
+
+[fuzz]
+runs = 1024
+
+[invariant]
+runs = 256
+depth = 32

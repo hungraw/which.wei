@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+.DS_Store
+
+# Vitest coverage output
+coverage
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/
+.github/*
+!.github/workflows/
+.claude/
+.agents/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+scripts/*
+!scripts/compress_dist.mjs
+!scripts/deploy_pinata.ts
+!scripts/rollback_contenthash.ts
+!scripts/common.ts
+docs/
+.env.live.runner
+.env
+.last-deploy-cid
+SKILL.md
+
+# Foundry build artifacts
+contracts/lib/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/.gas-snapshot

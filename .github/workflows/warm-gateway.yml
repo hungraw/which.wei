@@ -1,0 +1,48 @@
+name: Warm Gateway Cache
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch: {}      # Manual trigger
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm which.wei.limo cache
+        run: |
+          BASE="https://which.wei.limo"
+          URLS=(
+            "/"
+            "/favicon.png"
+            "/sw.js"
+          )
+
+          # Discover asset filenames from index.html
+          INDEX=$(curl -sf --max-time 30 "$BASE/" || echo "")
+          if [ -n "$INDEX" ]; then
+            ASSETS=$(echo "$INDEX" | grep -oP 'assets/[^"'"'"']+' | sort -u)
+            for a in $ASSETS; do
+              URLS+=("/$a")
+            done
+          fi
+
+          OK=0
+          FAIL=0
+          for path in "${URLS[@]}"; do
+            STATUS=$(curl -sf -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ ${path} → ${STATUS}"
+              OK=$((OK + 1))
+            else
+              echo "✗ ${path} → ${STATUS}"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+
+          TOTAL=$((OK + FAIL))
+          echo ""
+          echo "Result: ${OK}/${TOTAL} assets warm"
+          if [ "$FAIL" -gt 0 ]; then
+            echo "::warning::${FAIL} assets returned non-200"
+          fi

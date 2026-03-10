@@ -1,0 +1,21 @@
+# Test & coverage
+tests/
+coverage/
+
+# Reports & docs
+reports/
+docs/
+REPORT.md
+TODO.md
+AORI_RS.md
+NOBLE_RS.md
+
+# Scripts
+scripts/
+
+# Dev config
+.devcontainer/
+.claude/
+.env*
+tsconfig.json
+vite.config.ts
